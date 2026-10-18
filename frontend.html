@@ -1,61 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Pasindu's Todo Pro</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pasindu's Todo 🔥</title>
 <style>
-*{box-sizing:border-box}
-body{font-family:Arial;max-width:520px;margin:40px auto;background:#0f172a;padding:15px;color:white}
-.card{background:#1e293b;padding:28px;border-radius:20px;box-shadow:0 20px 40px #0005;border:1px solid #334155}
-h1{margin:0 0 20px 0;color:white}
-.row{display:flex;gap:10px}
-#taskInput{flex:1;padding:14px;border-radius:12px;border:1px solid #334155;outline:none;font-size:15px;background:#0f172a;color:white}
-.btn{padding:14px 20px;border-radius:12px;border:none;background:white;color:black;cursor:pointer;font-weight:700}
-.btn:active{transform:scale(.95)}
-li{margin:12px 0;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;list-style:none;transition:.3s;border-left:5px solid transparent}
-li.pending{background:#334155;border-left-color:#60a5fa;color:white}
-li.done{background:#14532d;border-left-color:#22c55e;color:#bbf7d0}
-li.done span{text-decoration:line-through;color:#86efac}
-li span{flex:1;font-size:16px;font-weight:500;text-align:left;padding-left:10px}
-li input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:#22c55e}
-.del{background:#ef4444;color:white;padding:10px 16px;border-radius:10px}
-.small{color:#94a3b8;font-size:13px;margin-top:15px;text-align:center}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:#0f172a;min-height:100vh;display:flex;justify-content:center;padding-top:80px;color:white}
+.card{background:#1e293b;padding:32px;border-radius:20px;width:90%;max-width:500px;box-shadow:0 20px 40px rgba(0,0,0,.4)}
+h1{font-size:28px;margin-bottom:20px;text-align:center}
+.input-row{display:flex;gap:12px;margin-bottom:20px}
+input{flex:1;background:#0f172a;border:1px solid #334155;padding:14px 16px;border-radius:12px;color:white;outline:none}
+input:focus{border-color:#3b82f6}
+button{background:white;color:#0f172a;border:none;padding:14px 22px;border-radius:12px;font-weight:700;cursor:pointer}
+button:hover{background:#e2e8f0}
+.task{background:#0f172a;border:1px solid #334155;padding:14px 16px;border-radius:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.task span.done{text-decoration:line-through;opacity:.5}
+.actions{display:flex;gap:8px}
+.actions button{padding:6px 12px;font-size:13px;border-radius:8px}
+.del{background:#ef4444;color:white}
 </style>
 </head>
 <body>
 <div class="card">
 <h1>Pasindu's Todo 🔥</h1>
-<div class="row">
+<div class="input-row">
 <input id="taskInput" placeholder="Aluth task ekak...">
-<button class="btn" onclick="addTask()">Add</button>
+<button onclick="addTask()">Add</button>
 </div>
-<ul id="list" style="padding:0;margin-top:20px"></ul>
-<div class="small" id="count"></div>
+<div id="list"></div>
+<p id="status" style="text-align:center;margin-top:16px;opacity:.5;font-size:12px"></p>
 </div>
 <script>
-const API = 'http://localhost:8080/api/tasks';
+const API = 'http://localhost:8080/api/todos';
+let useLocal = false;
+let tasks = JSON.parse(localStorage.getItem('pasindu-tasks') || '[]');
+
 async function load(){
- let r=await fetch(API); let tasks=await r.json();
- document.getElementById('list').innerHTML=tasks.map(t=>`
-  <li class="${t.completed?'done':'pending'}">
-   <input type="checkbox" ${t.completed?'checked':''} onchange="toggle(${t.id},${t.completed})">
-   <span>${t.text}</span>
-   <button class="btn del" onclick="del(${t.id})">X</button>
-  </li>`).join('');
- document.getElementById('count').innerText = tasks.length + ' tasks | ' + tasks.filter(x=>x.completed).length + ' done';
+ try{
+  const res = await fetch(API);
+  if(!res.ok) throw 'no api';
+  tasks = await res.json();
+  useLocal = false;
+  document.getElementById('status').innerText='🟢 Live Backend Connected';
+ }catch(e){
+  useLocal = true;
+  tasks = JSON.parse(localStorage.getItem('pasindu-tasks') || '[]');
+  document.getElementById('status').innerText='🟡 Demo Mode (Local Storage) - CV Ready';
+ }
+ render();
+}
+function render(){
+ const list=document.getElementById('list');
+ list.innerHTML='';
+ tasks.forEach((t,i)=>{
+  const d=document.createElement('div');
+  d.className='task';
+  const text = t.text || t.task || t;
+  const done = t.completed || false;
+  d.innerHTML=`<span class="${done?'done':''}" onclick="toggle(${i})">${text}</span><div class="actions"><button onclick="toggle(${i})">✓</button><button class="del" onclick="removeTask(${i})">X</button></div>`;
+  list.appendChild(d);
+ });
 }
 async function addTask(){
- let text=document.getElementById('taskInput').value.trim();
+ const input=document.getElementById('taskInput');
+ const text=input.value.trim();
  if(!text) return;
- await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
- document.getElementById('taskInput').value=''; load();
+ if(useLocal){
+  tasks.push({text,completed:false});
+  localStorage.setItem('pasindu-tasks',JSON.stringify(tasks));
+  input.value=''; render(); return;
+ }
+ await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:text})});
+ input.value=''; load();
 }
-async function del(id){ await fetch(API+'/'+id,{method:'DELETE'}); load(); }
-async function toggle(id,current){
- await fetch(API+'/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({completed:!current})});
+async function removeTask(i){
+ if(useLocal){
+  tasks.splice(i,1);
+  localStorage.setItem('pasindu-tasks',JSON.stringify(tasks));
+  render(); return;
+ }
+ const id=tasks[i].id;
+ await fetch(API+`/${id}`,{method:'DELETE'});
  load();
 }
-document.getElementById('taskInput').addEventListener('keydown',e=>{if(e.key==='Enter')addTask()});
+function toggle(i){
+ if(useLocal){
+  tasks[i].completed=!tasks[i].completed;
+  localStorage.setItem('pasindu-tasks',JSON.stringify(tasks));
+  render(); return;
+ }
+}
+document.getElementById('taskInput').addEventListener('keypress',e=>{if(e.key==='Enter')addTask()});
 load();
 </script>
 </body>
