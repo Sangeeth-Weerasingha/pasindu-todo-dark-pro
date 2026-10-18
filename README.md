@@ -1,21 +1,21 @@
-# Pasindu's Todo - Dark Pro 🔥
+# Todo App - Dark Pro 🔥
 
-My first Full-Stack Todo App - Built from Tambuttegama!
+A Full-Stack Todo application with Dark Mode UI.
 
 ### 🚀 Tech Stack
 - Java Spring Boot (Backend)
 - H2 Database + JPA
 - HTML / CSS / JavaScript (Frontend)
-- REST API (GET, POST, PUT, DELETE)
+- REST API
 
 ### ✨ Features
 - Add / Delete / Complete Tasks
-- Dark Pro UI with green completed tasks
-- Task Counter
-- Responsive Design
+- Dark Pro UI with smooth animations
+- Task Counter & Responsive Design
 
 ### ▶️ How to Run
 1. Backend: `.\mvnw.cmd spring-boot:run`
 2. Frontend: Open `frontend.html` in browser
 
-Made with ❤️ by Pasindu Sangeeth
+### 🔗 Live Demo
+GitHub: https://github.com/Sangeeth-Weerasingha/pasindu-todo-dark-pro
